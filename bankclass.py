@@ -59,7 +59,7 @@ class User:
         amount = int(input("Enter the amount you want to send"))
         if amount > 0:
             self.balance += amount
-        elif len(amount) < 2:
+        elif amount < 2:
             print("can't transfer less than hundred naira")
         else:
             print('amount too small')
@@ -75,7 +75,7 @@ class Bank:
         self.current_user = current_user
         self.db_connect = db_connect
     # this function is to create a bank account 
-    def create_acct():
+    def create_acct(self):
         while True:
             try:
                 id = 1 # maybe make this auto increasezsgggfe
@@ -86,7 +86,7 @@ class Bank:
                 pin = int(input('Enter your 4 digit pin'))
                 acct_no = phone[1:]
                 # i think this object of the user should happen after the user caalls the depoist function
-                user_obj = User(id,name,email,phone,pin,password,acct_no)
+                #user_obj = User(id,name,email,phone,pin,password,acct_no)
                 
             except ValueError:
                 print('invalid entry')
@@ -105,7 +105,7 @@ class Bank:
                 break
             
     # this function helps to login into the bank account
-    def login():
+    def login(self):
         while True:
             try:
                 login_acct_no = int(input("Enter your 10 digit Account Number......"))
@@ -135,16 +135,16 @@ class Bank:
             else:
                 print('do something here')
                 break
-    def show_main_main():
+    def show_main_main(self):
 
         pass
-    def handle_transaction():
+    def handle_transaction(self):
         pass
 
 
 def main(): 
     john = User(1,'Acha Saviour','Acha@gmail.com',2349067860967,1094,102345, 9067860967 )
-    john.deposit(2000)
+    #john.deposit(2000)
     john.withdraw(1000)
     #john.transfer(1500,9067860967)
 
