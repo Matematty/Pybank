@@ -6,7 +6,7 @@ import mysql.connector
 
 
 
-
+# i did not implement active users
 # this is the instance of the bank user
 class User:
     Status = 'Active'
@@ -27,54 +27,68 @@ class User:
         self.acct_no = acct_no
         self.balance = balance
         
-    def transfer(self,amount,target_acct):
-        if self.balance >= amount:
-            new_balance = self.balance - amount
-            print('transfer succesful')
-            print(new_balance)
+    def transfer(self):
+        sender_acct = int(input("Enter the Account you want to debit....."))
+        recipient_acct = int(input("Enter the Account you want to credit......"))
+        Database_manager.target_acct_no(self,recipient_acct) # i just decide not to do error handling here
+        amount = int(input("Enter amount....."))
+
+        if amount >= Database_manager.acct_balance(self,sender_acct):
+            print("insufficient funds")
+        elif Database_manager.acct_balance(self,sender_acct) < 50:
+            print("you have only 50 naira..")
+        elif amount < 100:
+            print("Can only transfer 100")
         else:
-            print('insufficent funds')
-        return self.balance
+            pin = int(input("enter your 4 digit payment pin"))
+            if pin == Database_manager.user_pin(self,pin):
+                try:
+                    Database_manager.user_transfer(self,amount,sender_acct,recipient_acct)
+                except Exception as e:
+                    print(f"transfer error {e}")
+                else:
+                    print(f"You have successfully Transferred {amount} to {Database_manager.target_acct_no(self,recipient_acct)}")
+            else:
+                print("Incorrect Pin ")
+
             
 
-    def withdraw(self,amount):
-        while True:
-            # use len to check the length of input
-            try:
-                withdraw_amount = int(input('enter amount... '))
-                if self.balance >= amount:
-                    new_balance = self.balance - amount
-
-                    # also check if the account that is being sent to exist
-                    print('withdraw successful')
-                    print(f'New balance is:{new_balance}')
-                else:
-                    print('insufficent funds')
-            except ValueError:
-                print('enter only numbers')
-                continue
-            else:
-                break
-                pass
-
-        return self.balance
-
-    def deposit(self,amount):
-
-        amount = int(input("Enter the amount you want to send___")).is_integer()
-        if amount >= 100:
-            self.balance += amount
-        elif amount < 100:
-            print("can't transfer less than hundred naira")
+    def withdraw(self):
+        amount = int(input("Enter the amount you want to withdraw....."))
+        debited_acct = int(input("Enter the Account you want to withdraw....."))
+        if amount < 100:
+            print("Can't withdraw less than 100 naira....")
+        elif Database_manager.acct_balance(self,debited_acct) < amount:
+            print("Insufficient funds...")
         else:
-            print('amount too small')
-        return f'deposited {self.balance}'
-        print(self.balance)
-    def get_balance(self,balance):
-        pass
+            try:
+                Database_manager.user_withdraw(self,amount,debited_acct)
+            except Exception as e:
+                print(f"database error {e}")
+        
+    def deposit(self):
+
+        amount = int(input("Enter the amount you want to send___"))
+        if amount < 100:
+            print("Can' deposit 100 naira..")
+        else:
+            acct_no = int(input("enter the account you want to credit___"))
+            try:
+                Database_manager.user_deposit(self,amount,acct_no)
+            except Exception as e:
+                print(e)
+            print(f"You have successfully deposited: {amount} to {acct_no}")
+        
+
+    def get_balance(self):
+        acct_no = int(input("Enter your account number....."))
+        pass_word = int(input("Enter Account Password....."))
+        balance = Database_manager.user_balance(self,acct_no,pass_word)
+        
+        return f"Your Account balance is: {balance}"
 
 
-# this is the instance the of the bank class
+# this is the instance of the bank class
 class Bank:
     def __init__(self,current_user,
                  db_connect):
@@ -93,7 +107,7 @@ class Bank:
                 pass_word = int(input("Enter Password(Enter only numbers)____"))
                 acct_no = phone_no[4:] 
                 pin = int(input('Enter your 4 digit pin_____'))
-                print(acct_no)
+                print(f"Your Account Number is: {acct_no}")
                 Database_manager.insert_user(self,full_name,email_address,phone_no,pass_word,acct_no,pin)
                 
             except ValueError as v:
@@ -114,56 +128,29 @@ class Bank:
             
     # this function helps to login into the bank account
     def login(self):
-        while True:
-            try:
-                email_address = str(input("Enter your email address to login...."))
-                pass_word = int(input('Enter Your 6 digit Password to login........'))
-
-            except ValueError:
-                print('invalid error')
-                continue
-            except TypeError as t:
-                print(f"Type error {t}")
-                continue
-            except mysql.connector.Error as err:
-                print(f"Database Error \nName not found {err}")
-                con
-            except Exception as e:
-                print(f'plenty error{e}')
-                continue
-            else:
+            for i in range(3):
                 try:
-                   Database_manager.login_user(self,email_address,pass_word)
-                   Bank.show_main_main()
+                    email_address = str(input("Enter your email address to login...."))
+                    pass_word = int(input('Enter Your 6 digit Password to login........'))
+
+                    #Database_manager.login_user(self,email_address,pass_word)
+                except ValueError as v:
+                    print(f"Value Error {v}")
+                    continue
+                    
+                except TypeError as t:
+                    print(f"Type Error {t}")
+                    continue
                 except Exception as e:
-                    print(e)
+                    print(f"Caught Error {e}")
+                    continue
                 break
+            return Database_manager.login_user(self,email_address,pass_word)
 
-    def show_main_main(self):
-        main_main = int(input("1.Transfer\n" \
-                            "2.Withdraw\n" \
-                            "3.Deposit\n" \
-                            "4.Check Balance......."))
-        while True:
-            if main_main == 1:
-                break
-                print("you will transfer here ")
-            elif main_main == 2:
-                print("you withdraw here ")
-            elif main_main == 3:
-                print("you deposit here ")
-            elif main_main == 4:
-                print("check your balance ")
-            else:
-                print("you have exited ")
-                break
-    
-        
+                    
 
 
-        
-    def handle_transaction(self):
-        pass
+                
 
 #this class is for housing all my sql queries
 class Database_manager:
@@ -178,35 +165,80 @@ class Database_manager:
                                         pass_word,acct_no,pin)" \
                                         " values (%s,%s,%s,%s,%s,%s);"
         
-        self.login_user_query = "select email_address,pass_word,  \
-                                case when email_address = %s and " \
-                                "pass_word = %s then 'login successfully' " \
-                                "else 'login unsuccessful' " \
-                                "end as login from users;"
-        user_transfer_query = " "
+        self.login_user_query = "select * from users  \
+                                where email_address = %s and " \
+                                "pass_word = %s ;"
+        
+        self.user_debit_query = "update users " \
+                            "set balance = balance - %s " \
+                            "where acct_no = %s ;" 
+        self.user_credit_query =  "update users " \
+                            "set balance = balance + %s " \
+                            "where acct_no = %s ;" 
+        self.balance_query = "select balance  from users where acct_no = %s and pass_word = %s;"
+        self.target_name_query = "select full_name from users where acct_no = %s;"
+        self.transfer_balance = "select balance  from users where acct_no = %s;"
+        self.user_pin_query = "select pin from users where acct_no = %s; "
+                        
 
     def insert_user(self,full_name,email_address,phone_no,pass_word,acct_no,pin):
         self.cursor.execute(self.insert_user_query,(full_name,email_address,phone_no,pass_word,acct_no,pin))
         self.connection.commit()
-        print('New Record Inserted into Database successfully')
+        #print('New Record Inserted into Database successfully')
 
     def login_user(self,email_address,pass_word):
-        fetch_it = self.cursor.execute(self.login_user_query,(email_address,pass_word))
+        try:
+            self.cursor.execute(self.login_user_query,(email_address,pass_word))
+            fetched = self.cursor.fetchone()
+            if fetched == None:
+                print("Invalid login credential")
+            else:
+                print(f"Welcome {fetched[1]} To Pybank!!!")
+        except Exception as e:
+            print(f"database error {e}")
+        return fetched 
 
+    def user_transfer(self,amount,acct_no,target_acct):
+        self.cursor.execute(self.user_debit_query,(amount,acct_no))
+        self.cursor.fetchall()
+        self.cursor.execute(self.user_credit_query,(amount,target_acct))
+        self.cursor.fetchall()
+        self.connection.commit()
+    
+    def user_deposit(self,amount,target_acct):
+        self.cursor.execute(self.user_credit_query,(amount,target_acct))
+        self.cursor.fetchall()
+        self.connection.commit()
+
+    def user_withdraw(self,amount,acct_no):
+        self.cursor.execute(self.user_debit_query,(amount,acct_no))
+        self.cursor.fetchall()
+        self.connection.commit()
+    def user_balance(self,acct_no,pass_word):
+        fetch_balance = self.cursor.execute(self.balance_query,(acct_no,pass_word))
+        balance = self.cursor.fetchone()
+        print(balance[0])
+    def target_acct_no(self,acct_no):
+        self.cursor.execute(self.target_name_query,(acct_no,))
+        fetched = self.cursor.fetchone()
+        print(f"You are transfering money to: {fetched[0]}")
+    def acct_balance(self,acct_no):
+        self.cursor.execute(self.transfer_balance,(acct_no,))
+        fetched = self.cursor.fetchone()
+        return fetched[0]
+    def user_pin(self,pin):
+        self.cursor.execute(self.user_pin_query,(pin,))
+        fetched = self.cursor.fetchone()
+        return fetched
+        
     
 
             
 
 
 
-def main(self): 
-   # insert_user = "insert into users values ('Acha Saviour','acha@gmail.com', '+2349067860967', '344769', 9067860967, '2003');"
-    #db = Database_manager()
-    
-
-
+def main(): 
     print('hello world')
-    
 
 
 if __name__ == "__main__":
